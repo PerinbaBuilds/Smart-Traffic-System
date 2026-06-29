@@ -25,7 +25,7 @@ export default function ControlPanel({
   }
 
   return (
-    <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Dispatch</h2>
         {canChangeRegion ? (
@@ -33,7 +33,7 @@ export default function ControlPanel({
             value={network?.regionId ?? ""}
             onChange={(event) => onChangeRegion(event.target.value)}
             title="Switch demo region"
-            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-600"
+            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-600 transition-colors hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/30"
           >
             {REGIONS.map((region) => (
               <option key={region.id} value={region.id}>
@@ -50,7 +50,7 @@ export default function ControlPanel({
           <select
             value={startId}
             onChange={(event) => setStartId(event.target.value)}
-            className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-700"
+            className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-700 transition-colors hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-400"
           >
             <option value="">Random start</option>
             {options.map((node) => (
@@ -62,7 +62,7 @@ export default function ControlPanel({
           <select
             value={endId}
             onChange={(event) => setEndId(event.target.value)}
-            className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-700"
+            className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-700 transition-colors hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/30"
           >
             <option value="">Random destination</option>
             {options.map((node) => (
@@ -74,13 +74,13 @@ export default function ControlPanel({
         </div>
         <button
           type="submit"
-          className="w-full rounded-md bg-red-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+          className="w-full rounded-md bg-red-600 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-700 hover:shadow active:scale-[0.99]"
         >
           🚑 Dispatch emergency vehicle
         </button>
       </form>
 
-      <label className="flex items-center justify-between text-sm text-slate-600">
+      <label className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">
         <span>Auto-generate scenarios</span>
         <input
           type="checkbox"
@@ -97,13 +97,17 @@ export default function ControlPanel({
           {vehicles.map((vehicle) => (
             <li
               key={vehicle.id}
-              className="flex items-center justify-between rounded-md bg-slate-50 px-2 py-1.5 text-xs"
+              className="flex items-center justify-between rounded-md bg-slate-50 px-2 py-1.5 text-xs transition-colors hover:bg-slate-100"
             >
               <span>
                 🚑 <span className="font-medium text-slate-800">{vehicle.label}</span>{" "}
                 <span className="text-slate-500">{vehicle.status}</span>
               </span>
-              <button onClick={() => onRecall(vehicle.id)} className="text-slate-400 hover:text-red-600">
+              <button
+                onClick={() => onRecall(vehicle.id)}
+                aria-label={`Recall ${vehicle.label}`}
+                className="text-slate-400 transition-colors hover:text-red-600"
+              >
                 ✕
               </button>
             </li>
