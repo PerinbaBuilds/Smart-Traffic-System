@@ -23,7 +23,7 @@ export default function Header({ mode, onAbout, cityName }) {
           className="h-10 w-10 flex-shrink-0 rounded-xl shadow-sm ring-1 ring-black/5"
         />
         <div>
-          <h1 className="text-lg font-bold leading-tight tracking-tight text-slate-900">Emergency Green Corridor</h1>
+          <h1 className="text-lg font-bold leading-tight tracking-tight text-slate-900">LifeLane</h1>
           <p className="text-xs text-slate-500">
             Watching <span className="font-medium text-slate-600">{cityName || "the network"}</span> so ambulances
             don't have to wait

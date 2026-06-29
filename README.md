@@ -1,12 +1,12 @@
-# Smart Traffic Signal for Emergency Vehicles
+# LifeLane - Smart Traffic Signal for Emergency Vehicles
 
 An IoT-enabled traffic control system that detects approaching ambulances via
 **GPS and siren-acoustic telemetry**, fuses the two signals, and opens a
 real-time **green corridor** through the intersections ahead of the vehicle -
-then clears and resumes normal cycling once it has passed. The default demo
-is set in **T. Nagar, Chennai** - one of the city's busiest commercial
-grids, and exactly the kind of stretch where a stuck ambulance costs minutes
-that matter.
+then clears and resumes normal cycling once it has passed. It ships with
+several real-world-anchored region presets - T. Nagar (Chennai), Manhattan
+(New York), and Sydney - so the same engine can model any dense intersection
+grid where a stuck ambulance costs minutes that matter.
 
 This repo contains a complete, runnable simulation of that system: a
 reactive traffic-control engine, a fleet of simulated emergency vehicles

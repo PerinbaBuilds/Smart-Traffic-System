@@ -10,8 +10,8 @@ export default function AboutModal({ onClose }) {
       >
         <h2 className="mb-1 text-xl font-bold text-slate-900">How this actually works</h2>
         <p className="mb-4 text-sm text-slate-500">
-          Picture an ambulance pulling out of a hospital on Usman Road during evening traffic. Here's what
-          happens between then and the moment it clears the last junction.
+          Picture an ambulance pulling out of a hospital during evening traffic, anywhere from Chennai to
+          Sydney to New York. Here's what happens between then and the moment it clears the last junction.
         </p>
         <ol className="list-inside list-decimal space-y-2 text-sm leading-relaxed">
           <li>
@@ -27,7 +27,7 @@ export default function AboutModal({ onClose }) {
           <li>
             Each junction decides for itself whether to preempt: it trusts GPS once the vehicle is within
             ~350m and confident, or falls back to the siren classifier within ~250m if GPS is shaky - the
-            kind of multipath drop you'd actually get between tall buildings on a street like this one.
+            kind of multipath drop you'd actually get between tall buildings in any dense city grid.
           </li>
           <li>
             Once triggered, the green corridor kicks in - the approach direction turns and holds green, the
@@ -44,7 +44,7 @@ export default function AboutModal({ onClose }) {
           <br />
           <code className="text-slate-700">
             curl -X POST /api/telemetry -H &quot;Content-Type: application/json&quot; -d
-            {' \'{"vehicleId":"ext-1","lat":13.0418,"lng":80.2341,"status":"en-route"}\''}
+            {' \'{"vehicleId":"ext-1","lat":0,"lng":0,"status":"en-route"}\''}
           </code>
         </p>
         <button onClick={onClose} className="mt-5 w-full rounded-md bg-slate-800 py-2 text-sm text-white hover:bg-slate-700">
