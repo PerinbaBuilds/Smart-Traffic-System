@@ -13,9 +13,9 @@ function timeAgo(ts) {
 
 export default function EventLog({ events }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="flex max-h-72 flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Event log</h2>
-      <ul className="flex-1 space-y-1.5 overflow-y-auto pr-1">
+      <ul className="space-y-1.5 overflow-y-auto pr-1">
         {events.length === 0 && <li className="text-xs text-slate-400">Waiting for activity…</li>}
         {events.map((event) => (
           <li key={event.id} className="flex gap-2 rounded-md px-1.5 py-1 text-xs transition-colors hover:bg-slate-50">
