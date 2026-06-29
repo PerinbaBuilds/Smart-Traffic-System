@@ -74,7 +74,7 @@ function buildEdges(network) {
   return edges;
 }
 
-export default function MapView({ network, state }) {
+export default function MapView({ network, state, onDispatch }) {
   const edges = useMemo(() => buildEdges(network), [network]);
   const center = useMemo(() => {
     const nodes = network?.intersections;
@@ -93,8 +93,26 @@ export default function MapView({ network, state }) {
     );
   }
 
+  const noActiveVehicles = (state?.vehicles ?? []).length === 0;
+
   return (
-    <MapContainer center={center} zoom={15} className="h-full w-full" preferCanvas>
+    <div className="relative h-full w-full">
+      {noActiveVehicles && (
+        <div className="pointer-events-none absolute inset-x-0 top-4 z-[1000] flex justify-center">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-slate-900/90 px-4 py-2 text-sm text-slate-200 shadow-lg ring-1 ring-slate-700">
+            <span>No emergency vehicles en route right now.</span>
+            {onDispatch && (
+              <button
+                onClick={() => onDispatch({})}
+                className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold transition-colors hover:bg-red-500"
+              >
+                🚑 Dispatch one
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      <MapContainer center={center} zoom={15} className="h-full w-full" preferCanvas>
       <RecenterOnChange center={center} zoom={15} />
       {/* A building-detail basemap (the default OSM raster style) makes the
           synthetic grid's mismatch with real road centerlines obvious at
@@ -136,6 +154,7 @@ export default function MapView({ network, state }) {
           </Tooltip>
         </Marker>
       ))}
-    </MapContainer>
+      </MapContainer>
+    </div>
   );
 }

@@ -17,6 +17,12 @@ hardware).
 required) - see [Deployment](#deployment) below for the URL once enabled on
 your fork/repo.
 
+> **🚧 Status: MVP.** This is a working proof of concept, not a
+> production-ready traffic-control product. The simulation, routing, and
+> preemption logic are functional end to end, but the project still needs
+> real-world hardening before it could touch an actual intersection - see
+> [Roadmap](#roadmap--known-limitations) for what's still missing.
+
 ## What it does
 
 - A downtown grid (4 avenues x 3 streets = 12 intersections) cycles its
@@ -176,3 +182,35 @@ npm test
 Runs the shared-engine unit tests (grid topology, routing, vehicle
 movement, preemption triggers, arrival/retirement) and the server's HTTP
 API tests against a real `http.Server` instance.
+
+## Roadmap / known limitations
+
+This project is an MVP: the core detection-and-preemption loop works and is
+tested, but it has not been hardened for a real deployment. Before this
+could control real intersections, it still needs:
+
+- **Real hardware integration.** The "GPS + siren" telemetry is simulated
+  ([`DeviceSimulator`](shared/src/DeviceSimulator.js)); a production system
+  needs actual onboard GPS units and an acoustic siren classifier posting
+  to the same `/api/telemetry` contract, plus a fallback when telemetry
+  goes stale or a device drops offline.
+- **Surveyed road networks.** Grids are procedurally generated from a
+  region preset ([`regions.js`](shared/src/regions.js)), not real
+  intersection geometry, signal-phase plans, or lane data - a real rollout
+  needs each municipality's actual controller inventory and phasing.
+- **Multi-vehicle conflict resolution.** Two emergency vehicles approaching
+  the same intersection from conflicting directions aren't reconciled
+  beyond first-come priority; a real system needs a proper arbitration
+  policy (and likely manual operator override).
+- **AuthN/authZ and auditing.** The optional `TRAFFIC_API_KEY` is a single
+  shared secret, fine for a demo but not for multi-agency access control or
+  a tamper-evident audit trail of who preempted what, when.
+- **Operational monitoring/alerting.** There's an event log, but no
+  metrics/alerting pipeline for controller health, missed detections, or
+  preemption failures in the field.
+- **Field validation.** Detection radii and confidence thresholds in
+  [`constants.js`](shared/src/constants.js) are reasonable starting
+  defaults, not calibrated against real sensor noise or city traffic
+  patterns.
+
+Contributions and issues that move any of the above forward are welcome.

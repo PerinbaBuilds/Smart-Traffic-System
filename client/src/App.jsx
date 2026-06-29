@@ -40,7 +40,7 @@ export default function App() {
       <Header mode={mode} onAbout={() => setShowAbout(true)} />
       <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
         <main className="relative min-h-[40vh] flex-1">
-          <MapView network={network} state={state} />
+          <MapView network={network} state={state} onDispatch={dispatch} />
         </main>
         <aside className="flex max-h-[55vh] w-full flex-shrink-0 flex-col gap-4 overflow-y-auto border-l border-slate-800 bg-slate-900/40 p-4 md:max-h-none md:w-96 md:overflow-hidden">
           {error && (

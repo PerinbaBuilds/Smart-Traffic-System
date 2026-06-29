@@ -29,6 +29,11 @@ export function createLocalRuntime() {
     }, constants.TICK_MS);
   }
   wire();
+  // The auto-dispatch scheduler waits up to AUTO_DISPATCH_MAX_MS before its
+  // first run, which leaves a static, empty-looking grid on first load of
+  // the backend-free demo. Send one vehicle immediately so a visitor sees
+  // the green-corridor behavior right away instead of a dead screen.
+  system.simulator.dispatch({});
 
   return {
     mode: "demo",
