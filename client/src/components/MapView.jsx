@@ -1,9 +1,42 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { MapContainer, TileLayer, Polyline, Marker, Popup, Tooltip, useMap } from "react-leaflet";
+import L from "leaflet";
+
+// A real traffic-signal head (pole + red/amber/green lamp stack) instead of
+// an abstract "NS"/"EW" badge - the lit lamp communicates the actual state
+// (normal cycling / vehicle inbound / green corridor open) the way a driver
+// would actually read it at a junction.
+function intersectionIcon(node) {
+  const lit = node.preempted ? "green" : node.preparing ? "amber" : "red";
+  const lamp = (color, isLit) => {
+    const colors = { red: "#ef4444", amber: "#f59e0b", green: "#22c55e" };
+    return `<span style="display:block;width:9px;height:9px;border-radius:50%;margin:1.5px auto;background:${isLit ? colors[color] : "#475569"};box-shadow:${isLit ? `0 0 6px ${colors[color]}` : "none"};"></span>`;
+  };
+  const pulse = node.preempted ? "animation:pulse 1.4s ease-in-out infinite;" : "";
+  const html = `
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div style="background:#1e293b;border-radius:4px;padding:3px 4px;box-shadow:0 1px 3px rgba(0,0,0,0.4);${pulse}">
+        ${lamp("red", lit === "red")}
+        ${lamp("amber", lit === "amber")}
+        ${lamp("green", lit === "green")}
+      </div>
+      <div style="width:2px;height:7px;background:#1e293b;"></div>
+    </div>`;
+  return L.divIcon({ html, className: "", iconSize: [22, 38], iconAnchor: [11, 38] });
+}
+
+// Identical on every call - build once and reuse rather than allocating a
+// fresh L.divIcon per vehicle marker on every render.
+const VEHICLE_ICON = L.divIcon({
+  html: `<div style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#dc2626;border:3px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,0.4);font-size:15px;">🚑</div>`,
+  className: "",
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
+});
 
 // state.intersections only carries fields that change tick to tick (see
 // TrafficEngine.getSnapshot); merge it onto the static network nodes
-// (id/name/lat/lng/col/row, fetched once) by id so markers always have
-// everything.
+// (id/name/lat/lng, fetched once) by id so markers always have everything.
 function mergeIntersections(network, state) {
   const staticNodes = network?.intersections;
   if (!staticNodes) return [];
@@ -12,47 +45,44 @@ function mergeIntersections(network, state) {
   return staticNodes.map((node) => ({ ...node, ...dynamicById.get(node.id) }));
 }
 
-// The intersection grid is a procedural simulation, not a survey of real
-// road centerlines - earlier we anchored it to real Chennai coordinates and
-// drew it over a real OpenStreetMap basemap, which made the simulated grid
-// look like it was cutting through actual buildings. Rather than fake a
-// precision it doesn't have, this renders the network as a clean schematic
-// diagram (like a metro map) using the grid's own col/row layout, with the
-// real street names kept as labels. A linear lat/lng -> grid-unit transform
-// (derived from any two same-row/same-col nodes) lets vehicle positions,
-// which are still simulated in lat/lng, plot correctly between intersections.
-function buildProjection(network) {
-  const nodes = network?.intersections ?? [];
-  if (nodes.length < 2) {
-    return { toXY: () => [0, 0], cols: 1, rows: 1 };
-  }
-  const sameRow = nodes.find((n) => n.row === nodes[0].row && n.col !== nodes[0].col);
-  const sameCol = nodes.find((n) => n.col === nodes[0].col && n.row !== nodes[0].row);
-  const lngPerCol = sameRow ? (sameRow.lng - nodes[0].lng) / (sameRow.col - nodes[0].col) : 1;
-  const latPerRow = sameCol ? (sameCol.lat - nodes[0].lat) / (sameCol.row - nodes[0].row) : -1;
-  const originLng = nodes[0].lng - nodes[0].col * lngPerCol;
-  const originLat = nodes[0].lat - nodes[0].row * latPerRow;
-  const cols = Math.max(...nodes.map((n) => n.col)) + 1;
-  const rows = Math.max(...nodes.map((n) => n.row)) + 1;
-  return {
-    toXY: (lat, lng) => [(lng - originLng) / lngPerCol, (lat - originLat) / latPerRow],
-    cols,
-    rows,
-  };
+// MapContainer's center/zoom props only apply on first mount - react-leaflet
+// won't re-pan an already-mounted map when they change later. Without this,
+// switching regions leaves the viewport stuck over the old city while the
+// new markers render off-screen.
+function RecenterOnChange({ center, zoom }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, zoom, map]);
+  return null;
 }
 
-const UNIT = 120; // px per grid block at viewBox scale
-const PAD = 70;
-
-function statusStyle(node) {
-  if (node.preempted) return { fill: "#10b981", ring: "#a7f3d0", r: 15, pulse: true };
-  if (node.preparing) return { fill: "#f59e0b", ring: "#fde68a", r: 13, pulse: false };
-  return { fill: "#ffffff", ring: "#94a3b8", r: 11, pulse: false };
+function buildEdges(network) {
+  if (!network?.intersections) return [];
+  const byId = new Map(network.intersections.map((n) => [n.id, n]));
+  const seen = new Set();
+  const edges = [];
+  for (const node of network.intersections) {
+    for (const neighborId of Object.keys(node.neighbors || {})) {
+      const key = [node.id, neighborId].sort().join("-");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const neighbor = byId.get(neighborId);
+      if (neighbor) edges.push([[node.lat, node.lng], [neighbor.lat, neighbor.lng]]);
+    }
+  }
+  return edges;
 }
 
 export default function MapView({ network, state, onDispatch }) {
-  const [selected, setSelected] = useState(null);
-  const projection = useMemo(() => buildProjection(network), [network]);
+  const edges = useMemo(() => buildEdges(network), [network]);
+  const center = useMemo(() => {
+    const nodes = network?.intersections;
+    if (!nodes?.length) return [13.0418, 80.2341];
+    const lats = nodes.map((n) => n.lat);
+    const lngs = nodes.map((n) => n.lng);
+    return [(Math.min(...lats) + Math.max(...lats)) / 2, (Math.min(...lngs) + Math.max(...lngs)) / 2];
+  }, [network]);
   const intersections = useMemo(() => mergeIntersections(network, state), [network, state]);
 
   if (!network) {
@@ -63,32 +93,17 @@ export default function MapView({ network, state, onDispatch }) {
     );
   }
 
-  const width = (projection.cols - 1) * UNIT + PAD * 2;
-  const height = (projection.rows - 1) * UNIT + PAD * 2;
-  const px = (col) => col * UNIT + PAD;
-  const py = (row) => row * UNIT + PAD;
-
-  const byId = new Map(network.intersections.map((node) => [node.id, node]));
-  const seen = new Set();
-  const edges = [];
-  for (const node of network.intersections) {
-    for (const neighborId of Object.keys(node.neighbors || {})) {
-      const key = [node.id, neighborId].sort().join("-");
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const neighbor = byId.get(neighborId);
-      if (!neighbor) continue;
-      edges.push({ x1: px(node.col), y1: py(node.row), x2: px(neighbor.col), y2: py(neighbor.row) });
-    }
-  }
-
   const noActiveVehicles = (state?.vehicles ?? []).length === 0;
-  const selectedNode = selected ? intersections.find((n) => n.id === selected) : null;
+  // Zoomed in tight on just the simulated block so the dashboard reads as
+  // "this junction cluster" rather than implying the whole visible city is
+  // wired up - the grid is a simulation overlay, not a claim about every
+  // street on the basemap.
+  const zoom = 18;
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-slate-100">
+    <div className="relative h-full w-full">
       {noActiveVehicles && (
-        <div className="pointer-events-none absolute inset-x-0 top-4 z-20 flex justify-center">
+        <div className="pointer-events-none absolute inset-x-0 top-4 z-[1000] flex justify-center">
           <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-white px-4 py-2 text-sm text-slate-700 shadow-lg ring-1 ring-slate-200">
             <span>No emergency vehicles en route right now.</span>
             {onDispatch && (
@@ -102,83 +117,55 @@ export default function MapView({ network, state, onDispatch }) {
           </div>
         </div>
       )}
-
-      <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full" preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <pattern id="grid-dots" width="24" height="24" patternUnits="userSpaceOnUse">
-            <circle cx="12" cy="12" r="1.2" fill="#cbd5e1" />
-          </pattern>
-        </defs>
-        <rect x="0" y="0" width={width} height={height} fill="url(#grid-dots)" />
-
-        {edges.map((edge, idx) => (
-          <g key={idx}>
-            <line x1={edge.x1} y1={edge.y1} x2={edge.x2} y2={edge.y2} stroke="#cbd5e1" strokeWidth="22" strokeLinecap="round" />
-            <line x1={edge.x1} y1={edge.y1} x2={edge.x2} y2={edge.y2} stroke="#94a3b8" strokeWidth="2" strokeDasharray="10 10" />
-          </g>
+      <MapContainer center={center} zoom={zoom} className="h-full w-full" preferCanvas>
+        <RecenterOnChange center={center} zoom={zoom} />
+        {/* Voyager basemap: real streets, labels and building footprints in
+            a familiar, Google Maps-style light palette. */}
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          subdomains="abcd"
+          maxZoom={20}
+          detectRetina
+        />
+        {edges.map((positions, idx) => (
+          <Polyline
+            key={idx}
+            positions={positions}
+            pathOptions={{ color: "#1e293b", weight: 9, opacity: 0.85, lineCap: "round" }}
+          />
         ))}
-
-        {intersections.map((node) => {
-          const style = statusStyle(node);
-          const x = px(node.col);
-          const y = py(node.row);
-          return (
-            <g key={node.id} onClick={() => setSelected(node.id)} className="cursor-pointer">
-              <circle cx={x} cy={y} r={style.r + 5} fill={style.ring} opacity={style.pulse ? 0.5 : 0.35}>
-                {style.pulse && (
-                  <animate attributeName="r" values={`${style.r + 5};${style.r + 12};${style.r + 5}`} dur="1.4s" repeatCount="indefinite" />
-                )}
-              </circle>
-              <circle cx={x} cy={y} r={style.r} fill={style.fill} stroke="#475569" strokeWidth="2.5" />
-              {node.preempted && (
-                <text x={x} y={y + 5} textAnchor="middle" fontSize="14" fontWeight="700" fill="#ffffff">
-                  ⚡
-                </text>
-              )}
-            </g>
-          );
-        })}
-
-        {(state?.vehicles ?? []).map((vehicle) => {
-          const [col, row] = projection.toXY(vehicle.lat, vehicle.lng);
-          const x = px(col);
-          const y = py(row);
-          return (
-            <g key={vehicle.id} onClick={() => setSelected(`vehicle:${vehicle.id}`)} className="cursor-pointer">
-              <circle cx={x} cy={y} r="16" fill="#dc2626" stroke="#ffffff" strokeWidth="3" />
-              <text x={x} y={y + 6} textAnchor="middle" fontSize="16">
-                🚑
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-
-      {selectedNode && (
-        <div className="absolute bottom-4 left-4 z-20 max-w-xs rounded-lg bg-white p-3 text-sm shadow-lg ring-1 ring-slate-200">
-          <button onClick={() => setSelected(null)} className="absolute right-2 top-2 text-slate-400 hover:text-slate-600">
-            ✕
-          </button>
-          <p className="font-semibold text-slate-900">{selectedNode.name}</p>
-          <p className="text-slate-500">Green axis: {selectedNode.axis}</p>
-          {selectedNode.preempted && <p className="font-semibold text-emerald-600">Green corridor active</p>}
-          {selectedNode.preparing && !selectedNode.preempted && <p className="text-amber-600">Vehicle inbound</p>}
-        </div>
-      )}
-      {selected?.startsWith?.("vehicle:") && (() => {
-        const vehicle = (state?.vehicles ?? []).find((v) => `vehicle:${v.id}` === selected);
-        if (!vehicle) return null;
-        return (
-          <div className="absolute bottom-4 left-4 z-20 max-w-xs rounded-lg bg-white p-3 text-sm shadow-lg ring-1 ring-slate-200">
-            <button onClick={() => setSelected(null)} className="absolute right-2 top-2 text-slate-400 hover:text-slate-600">
-              ✕
-            </button>
-            <p className="font-semibold text-slate-900">{vehicle.label}</p>
-            <p className="text-slate-500">{vehicle.status}</p>
-            {vehicle.detectionSource && <p className="text-slate-500">Detected via {vehicle.detectionSource}</p>}
-          </div>
-        );
-      })()}
+        {edges.map((positions, idx) => (
+          <Polyline
+            key={`lane-${idx}`}
+            positions={positions}
+            pathOptions={{ color: "#fbbf24", weight: 1.5, opacity: 0.9, dashArray: "10 12" }}
+          />
+        ))}
+        {intersections.map((node) => (
+          <Marker key={node.id} position={[node.lat, node.lng]} icon={intersectionIcon(node)}>
+            <Popup>
+              <div className="text-sm">
+                <p className="font-semibold">{node.name}</p>
+                {node.preempted && <p className="font-semibold text-emerald-600">Green corridor active - ambulance has right of way</p>}
+                {node.preparing && !node.preempted && <p className="text-amber-600">Ambulance inbound - signal preparing to switch</p>}
+                {!node.preempted && !node.preparing && <p className="text-slate-500">Normal signal cycling</p>}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+        {(state?.vehicles ?? []).map((vehicle) => (
+          <Marker key={vehicle.id} position={[vehicle.lat, vehicle.lng]} icon={VEHICLE_ICON}>
+            <Tooltip direction="top" offset={[0, -10]}>
+              <div className="text-xs">
+                <p className="font-semibold">{vehicle.label}</p>
+                <p>{vehicle.status}</p>
+                {vehicle.detectionSource && <p>Detected via {vehicle.detectionSource}</p>}
+              </div>
+            </Tooltip>
+          </Marker>
+        ))}
+      </MapContainer>
     </div>
   );
 }

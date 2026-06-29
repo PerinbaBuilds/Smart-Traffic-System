@@ -4,19 +4,19 @@ export default function Legend() {
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Legend</h2>
       <div className="space-y-1.5">
         <div className="flex items-center gap-2">
-          <span className="inline-block h-4 w-4 rounded-full border-2 border-slate-400 bg-white" />
-          Normal signal cycling
+          <span className="inline-block h-3 w-3 rounded-full bg-slate-500" />
+          Signal lamp lit red - normal cycling
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-block h-4 w-4 rounded-full border-2 border-amber-200 bg-amber-400" />
-          Vehicle inbound (early warning)
+          <span className="inline-block h-3 w-3 rounded-full bg-amber-400" />
+          Signal lamp lit amber - ambulance inbound
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-block h-4 w-4 animate-pulse rounded-full border-2 border-emerald-200 bg-emerald-500" />
-          Green corridor active
+          <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-emerald-500" />
+          Signal lamp lit green - corridor open, ambulance has right of way
         </div>
         <div className="flex items-center gap-2">
-          <span>🚑</span> Emergency vehicle
+          <span>🚑</span> Emergency vehicle, moving along the route
         </div>
       </div>
     </div>
