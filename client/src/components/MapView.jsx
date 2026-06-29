@@ -10,19 +10,19 @@ function intersectionIcon(node) {
   const lit = node.preempted ? "green" : node.preparing ? "amber" : "red";
   const lamp = (color, isLit) => {
     const colors = { red: "#ef4444", amber: "#f59e0b", green: "#22c55e" };
-    return `<span style="display:block;width:9px;height:9px;border-radius:50%;margin:1.5px auto;background:${isLit ? colors[color] : "#475569"};box-shadow:${isLit ? `0 0 6px ${colors[color]}` : "none"};"></span>`;
+    return `<span style="display:block;width:12px;height:12px;border-radius:50%;margin:2px auto;background:${isLit ? colors[color] : "#475569"};box-shadow:${isLit ? `0 0 8px ${colors[color]}` : "none"};"></span>`;
   };
   const pulse = node.preempted ? "animation:pulse 1.4s ease-in-out infinite;" : "";
   const html = `
     <div style="display:flex;flex-direction:column;align-items:center;">
-      <div style="background:#1e293b;border-radius:4px;padding:3px 4px;box-shadow:0 1px 3px rgba(0,0,0,0.4);${pulse}">
+      <div style="background:#1e293b;border-radius:5px;padding:4px 5px;box-shadow:0 2px 5px rgba(0,0,0,0.5);${pulse}">
         ${lamp("red", lit === "red")}
         ${lamp("amber", lit === "amber")}
         ${lamp("green", lit === "green")}
       </div>
-      <div style="width:2px;height:7px;background:#1e293b;"></div>
+      <div style="width:3px;height:9px;background:#1e293b;"></div>
     </div>`;
-  return L.divIcon({ html, className: "", iconSize: [22, 38], iconAnchor: [11, 38] });
+  return L.divIcon({ html, className: "", iconSize: [28, 48], iconAnchor: [14, 48] });
 }
 
 // Identical on every call - build once and reuse rather than allocating a
@@ -57,21 +57,12 @@ function RecenterOnChange({ center, zoom }) {
   return null;
 }
 
-// A dead-straight line between two intersections reads as a graph-paper
-// grid, not a street. Bowing each segment slightly outward at its midpoint
-// (deterministically, from the segment's own endpoints, so it's stable
-// across renders) makes roads look like they were actually surveyed rather
-// than ruled with a straightedge.
-function bendMidpoint([lat1, lng1], [lat2, lng2]) {
-  const midLat = (lat1 + lat2) / 2;
-  const midLng = (lng1 + lng2) / 2;
-  const dLat = lat2 - lat1;
-  const dLng = lng2 - lng1;
-  const seed = Math.sin(lat1 * 1000 + lng2 * 1000);
-  const bow = seed * 0.07;
-  return [midLat - dLng * bow, midLng + dLat * bow];
-}
-
+// The grid is a synthetic simulation overlay, not surveyed road geometry -
+// it will never line up with the real street centerlines under it on any
+// basemap. Bowing segments to fake "surveyed" roads only made that mismatch
+// more obvious (curves over a basemap that's all straight blocks). Drawing
+// dead-straight edges instead reads honestly as a schematic grid laid on
+// top of the city, the way a control-room overlay actually looks.
 function buildEdges(network) {
   if (!network?.intersections) return [];
   const byId = new Map(network.intersections.map((n) => [n.id, n]));
@@ -86,7 +77,7 @@ function buildEdges(network) {
       if (!neighbor) continue;
       const from = [node.lat, node.lng];
       const to = [neighbor.lat, neighbor.lng];
-      edges.push([from, bendMidpoint(from, to), to]);
+      edges.push([from, to]);
     }
   }
   return edges;
@@ -116,7 +107,7 @@ export default function MapView({ network, state, onDispatch }) {
   // "this junction cluster" rather than implying the whole visible city is
   // wired up - the grid is a simulation overlay, not a claim about every
   // street on the basemap.
-  const zoom = 18;
+  const zoom = 17;
 
   return (
     <div className="relative h-full w-full">
@@ -138,13 +129,14 @@ export default function MapView({ network, state, onDispatch }) {
       <MapContainer center={center} zoom={zoom} className="h-full w-full" preferCanvas>
         <RecenterOnChange center={center} zoom={zoom} />
         {/* This network is simulated, not surveyed - it will never line up
-            with a basemap's real road centerlines. Drawing it over a tile
-            layer that shows real streets/labels (Voyager, standard OSM)
-            guarantees a visible mismatch in every city. Positron's
-            label-free style keeps real terrain/land-use context (so it
-            still reads as "a real place") without a competing real road
-            network for the simulated grid to clash with. */}
+            with a basemap's real road centerlines, no matter how it's
+            drawn. Rather than chasing an alignment that isn't possible,
+            the basemap is faded into the background (via the CSS filter
+            below) so it only supplies general place/terrain context, while
+            the grid itself - drawn bold and opaque on top - is unmistakably
+            the thing the dashboard is about. */}
         <TileLayer
+          className="grayscale-[20%] brightness-[1.15] contrast-[0.85] opacity-60"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
           subdomains="abcd"
@@ -155,14 +147,14 @@ export default function MapView({ network, state, onDispatch }) {
           <Polyline
             key={idx}
             positions={positions}
-            pathOptions={{ color: "#1e293b", weight: 9, opacity: 0.85, lineCap: "round" }}
+            pathOptions={{ color: "#0f172a", weight: 12, opacity: 1, lineCap: "round" }}
           />
         ))}
         {edges.map((positions, idx) => (
           <Polyline
             key={`lane-${idx}`}
             positions={positions}
-            pathOptions={{ color: "#fbbf24", weight: 1.5, opacity: 0.9, dashArray: "10 12" }}
+            pathOptions={{ color: "#fbbf24", weight: 2, opacity: 1, dashArray: "10 12" }}
           />
         ))}
         {intersections.map((node) => (
