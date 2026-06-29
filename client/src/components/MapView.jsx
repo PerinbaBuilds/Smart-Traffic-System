@@ -114,16 +114,13 @@ export default function MapView({ network, state, onDispatch }) {
       )}
       <MapContainer center={center} zoom={15} className="h-full w-full" preferCanvas>
       <RecenterOnChange center={center} zoom={15} />
-      {/* A building-detail basemap (the default OSM raster style) makes the
-          synthetic grid's mismatch with real road centerlines obvious at
-          street zoom - intersections and vehicles can render on top of real
-          buildings since this network is a procedural approximation (see
-          shared/src/regions.js), not surveyed road geometry. A no-buildings,
-          no-labels basemap removes that contradiction and matches the dark
-          control-room theme. */}
+      {/* dark_all (vs. dark_nolabels) keeps the dark control-room theme but
+          still renders street lines and labels, so the map doesn't look
+          like an empty black void around the procedural intersection grid
+          (see shared/src/regions.js) at city zoom levels. */}
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         subdomains="abcd"
         maxZoom={19}
         detectRetina
