@@ -6,8 +6,3 @@ body,
   height: 100%;
   margin: 0;
 }
-
-.leaflet-container {
-  background: #e2e8f0;
-  font-family: inherit;
-}

@@ -32,6 +32,8 @@ export function createApiRouter({ engine, simulator, loadRecentEvents }) {
         name: node.name,
         lat: node.lat,
         lng: node.lng,
+        col: node.col,
+        row: node.row,
         neighbors: node.neighbors,
       })),
     });
