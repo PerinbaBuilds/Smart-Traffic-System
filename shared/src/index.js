@@ -10,7 +10,7 @@ import { DeviceSimulator } from "./DeviceSimulator.js";
 import { buildNetwork } from "./network.js";
 
 // Convenience factory: wires up one engine + one simulator over a fresh
-// network for the given region (defaults to "metroville" for zero-config
+// network for the given region (defaults to "chennai" for zero-config
 // compatibility). Used identically by the Node server and the browser-only
 // demo runtime so both share the exact same traffic-control logic, anywhere
 // on the globe the region catalog covers.

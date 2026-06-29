@@ -3,7 +3,10 @@
 An IoT-enabled traffic control system that detects approaching ambulances via
 **GPS and siren-acoustic telemetry**, fuses the two signals, and opens a
 real-time **green corridor** through the intersections ahead of the vehicle -
-then clears and resumes normal cycling once it has passed.
+then clears and resumes normal cycling once it has passed. The default demo
+is set in **T. Nagar, Chennai** - one of the city's busiest commercial
+grids, and exactly the kind of stretch where a stuck ambulance costs minutes
+that matter.
 
 This repo contains a complete, runnable simulation of that system: a
 reactive traffic-control engine, a fleet of simulated emergency vehicles
@@ -28,11 +31,12 @@ your fork/repo.
 - A downtown grid (4 avenues x 3 streets = 12 intersections) cycles its
   lights normally (NS green / EW green / all-red clearance) like any
   signalized network. The grid generator is data-driven
-  ([`shared/src/regions.js`](shared/src/regions.js)) and ships with three
-  real-world-anchored presets - Metroville (fictional default), Midtown
-  Manhattan, and Sydney CBD - so the same engine can stand up a plausible
-  network anywhere on the globe, not just one fixed city. A real deployment
-  picks its region once via `REGION_ID`; the standalone demo lets you switch
+  ([`shared/src/regions.js`](shared/src/regions.js)) and ships with four
+  real-world-anchored presets - T. Nagar, Chennai (default), a fictional
+  Metroville fixture used by the tests, Midtown Manhattan, and Sydney CBD -
+  so the same engine can stand up a plausible network anywhere on the
+  globe, not just one fixed city. A real deployment picks its region once
+  via `REGION_ID`; the standalone demo lets you switch
   between presets live from the dashboard.
 - Dispatching an emergency vehicle computes a route across the grid and
   starts streaming telemetry (position, speed, GPS confidence, siren
@@ -105,7 +109,7 @@ deployment:
 | --- | --- | --- |
 | `PORT` | `4000` | Port the Express/Socket.IO server listens on. |
 | `DATA_DIR` | `./server/data` | Where the SQLite event-log database is stored. |
-| `REGION_ID` | `metroville` | Which region preset this server instance serves (`metroville`, `manhattan`, `sydney` - see `shared/src/regions.js`). One controller manages one region, same as a real municipal deployment. |
+| `REGION_ID` | `chennai` | Which region preset this server instance serves (`chennai`, `metroville`, `manhattan`, `sydney` - see `shared/src/regions.js`). One controller manages one region, same as a real municipal deployment. |
 | `CORS_ORIGIN` | `*` | Comma-separated allowlist of dashboard origins permitted to call the API / open a Socket.IO connection. Lock this down for a public deployment. |
 | `TRAFFIC_API_KEY` | unset (no auth) | When set, write endpoints require this value in an `x-api-key` header. |
 | `VITE_BACKEND_URL` | page origin | Build-time only: base URL of the backend the dashboard should talk to. |
@@ -118,7 +122,7 @@ simulated vehicles use:
 ```bash
 curl -X POST http://localhost:4000/api/telemetry \
   -H "Content-Type: application/json" \
-  -d '{"vehicleId":"ext-1","lat":40.0,"lng":-83.0,"status":"en-route"}'
+  -d '{"vehicleId":"ext-1","lat":13.0418,"lng":80.2341,"status":"en-route"}'
 ```
 
 If `TRAFFIC_API_KEY` is set, add `-H "x-api-key: <key>"` to every write

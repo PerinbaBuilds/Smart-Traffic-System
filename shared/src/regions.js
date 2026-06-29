@@ -9,10 +9,21 @@
 // precise survey. A real municipal deployment would replace a region entry
 // with its actual signal-controller inventory (see docs/ARCHITECTURE.md).
 export const REGIONS = {
+  chennai: {
+    id: "chennai",
+    cityName: "T. Nagar, Chennai, India",
+    description: "Default region: a busy T. Nagar grid using real road names, anchored a short walk from Panagal Park.",
+    cols: ["Usman Rd", "G N Chetty Rd", "Burkit Rd", "Habibullah Rd"],
+    rows: ["Thyagaraya Rd", "Venkatanarayana Rd", "North Usman Rd"],
+    baseLat: 13.0418,
+    baseLng: 80.2341,
+    latStep: 0.00095, // ~105m per block
+    lngStep: 0.00105, // ~115m per block at this latitude
+  },
   metroville: {
     id: "metroville",
     cityName: "Metroville",
-    description: "Fictional reference grid (default demo + test fixture).",
+    description: "Fictional reference grid (test fixture).",
     cols: ["1st Ave", "2nd Ave", "3rd Ave", "4th Ave"],
     rows: ["1st St", "2nd St", "3rd St"],
     baseLat: 40.0,
@@ -44,7 +55,7 @@ export const REGIONS = {
   },
 };
 
-export const DEFAULT_REGION_ID = "metroville";
+export const DEFAULT_REGION_ID = "chennai";
 
 export function getRegion(regionId) {
   const region = REGIONS[regionId || DEFAULT_REGION_ID];

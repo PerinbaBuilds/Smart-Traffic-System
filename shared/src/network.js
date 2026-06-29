@@ -4,8 +4,8 @@ function nodeId(col, row) {
   return `${String.fromCharCode(65 + col)}${row + 1}`;
 }
 
-// Builds a rectangular grid network for the given region (defaults to the
-// "metroville" fixture region for zero-config/backward-compatible callers).
+// Builds a rectangular grid network for the given region (defaults to
+// "chennai" for zero-config/backward-compatible callers).
 // Same procedural generation regardless of region - only the anchor
 // coordinates, block spacing, and street names differ - so this works for
 // any region preset in shared/src/regions.js, or a custom config object

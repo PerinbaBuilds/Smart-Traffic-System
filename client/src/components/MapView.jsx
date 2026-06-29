@@ -4,7 +4,7 @@ import L from "leaflet";
 
 function intersectionIcon(node) {
   const base = "flex items-center justify-center rounded-full font-bold shadow-lg border-2";
-  let classes = `${base} bg-slate-700 border-slate-400 text-slate-100`;
+  let classes = `${base} bg-white border-slate-400 text-slate-600`;
   let size = 24;
   let label = node.axis;
 
@@ -78,7 +78,7 @@ export default function MapView({ network, state, onDispatch }) {
   const edges = useMemo(() => buildEdges(network), [network]);
   const center = useMemo(() => {
     const nodes = network?.intersections;
-    if (!nodes?.length) return [40, -83];
+    if (!nodes?.length) return [13.0418, 80.2341];
     const lats = nodes.map((n) => n.lat);
     const lngs = nodes.map((n) => n.lng);
     return [(Math.min(...lats) + Math.max(...lats)) / 2, (Math.min(...lngs) + Math.max(...lngs)) / 2];
@@ -87,7 +87,7 @@ export default function MapView({ network, state, onDispatch }) {
 
   if (!network) {
     return (
-      <div className="flex h-full w-full items-center justify-center text-slate-400">
+      <div className="flex h-full w-full items-center justify-center text-slate-500">
         Connecting to traffic network…
       </div>
     );
@@ -99,12 +99,12 @@ export default function MapView({ network, state, onDispatch }) {
     <div className="relative h-full w-full">
       {noActiveVehicles && (
         <div className="pointer-events-none absolute inset-x-0 top-4 z-[1000] flex justify-center">
-          <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-slate-900/90 px-4 py-2 text-sm text-slate-200 shadow-lg ring-1 ring-slate-700">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-white px-4 py-2 text-sm text-slate-700 shadow-lg ring-1 ring-slate-200">
             <span>No emergency vehicles en route right now.</span>
             {onDispatch && (
               <button
                 onClick={() => onDispatch({})}
-                className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold transition-colors hover:bg-red-500"
+                className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-red-700"
               >
                 🚑 Dispatch one
               </button>
@@ -114,19 +114,17 @@ export default function MapView({ network, state, onDispatch }) {
       )}
       <MapContainer center={center} zoom={15} className="h-full w-full" preferCanvas>
       <RecenterOnChange center={center} zoom={15} />
-      {/* dark_all (vs. dark_nolabels) keeps the dark control-room theme but
-          still renders street lines and labels, so the map doesn't look
-          like an empty black void around the procedural intersection grid
-          (see shared/src/regions.js) at city zoom levels. */}
+      {/* A light basemap keeps street lines and labels readable while
+          matching the rest of the dashboard's light theme. */}
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         subdomains="abcd"
         maxZoom={19}
         detectRetina
       />
       {edges.map((positions, idx) => (
-        <Polyline key={idx} positions={positions} pathOptions={{ color: "#475569", weight: 6, opacity: 0.55 }} />
+        <Polyline key={idx} positions={positions} pathOptions={{ color: "#334155", weight: 5, opacity: 0.5 }} />
       ))}
       {intersections.map((node) => (
         <Marker key={node.id} position={[node.lat, node.lng]} icon={intersectionIcon(node)}>
