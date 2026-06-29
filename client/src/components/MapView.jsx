@@ -130,13 +130,13 @@ export default function MapView({ network, state, onDispatch }) {
         <RecenterOnChange center={center} zoom={zoom} />
         {/* This network is simulated, not surveyed - it will never line up
             with a basemap's real road centerlines, no matter how it's
-            drawn. Rather than chasing an alignment that isn't possible,
-            the basemap is faded into the background (via the CSS filter
-            below) so it only supplies general place/terrain context, while
-            the grid itself - drawn bold and opaque on top - is unmistakably
-            the thing the dashboard is about. */}
+            drawn. Rather than chasing an alignment that isn't possible, the
+            basemap is dimmed slightly (via the CSS filter below) so the
+            grid - drawn bold and opaque on top - clearly reads as the
+            dashboard's primary layer, while the basemap stays visible
+            enough to still place it on a real map. */}
         <TileLayer
-          className="grayscale-[20%] brightness-[1.15] contrast-[0.85] opacity-60"
+          className="grayscale-[15%] contrast-[0.95] opacity-90"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
           subdomains="abcd"
