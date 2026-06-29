@@ -57,6 +57,21 @@ function RecenterOnChange({ center, zoom }) {
   return null;
 }
 
+// A dead-straight line between two intersections reads as a graph-paper
+// grid, not a street. Bowing each segment slightly outward at its midpoint
+// (deterministically, from the segment's own endpoints, so it's stable
+// across renders) makes roads look like they were actually surveyed rather
+// than ruled with a straightedge.
+function bendMidpoint([lat1, lng1], [lat2, lng2]) {
+  const midLat = (lat1 + lat2) / 2;
+  const midLng = (lng1 + lng2) / 2;
+  const dLat = lat2 - lat1;
+  const dLng = lng2 - lng1;
+  const seed = Math.sin(lat1 * 1000 + lng2 * 1000);
+  const bow = seed * 0.07;
+  return [midLat - dLng * bow, midLng + dLat * bow];
+}
+
 function buildEdges(network) {
   if (!network?.intersections) return [];
   const byId = new Map(network.intersections.map((n) => [n.id, n]));
@@ -68,7 +83,10 @@ function buildEdges(network) {
       if (seen.has(key)) continue;
       seen.add(key);
       const neighbor = byId.get(neighborId);
-      if (neighbor) edges.push([[node.lat, node.lng], [neighbor.lat, neighbor.lng]]);
+      if (!neighbor) continue;
+      const from = [node.lat, node.lng];
+      const to = [neighbor.lat, neighbor.lng];
+      edges.push([from, bendMidpoint(from, to), to]);
     }
   }
   return edges;

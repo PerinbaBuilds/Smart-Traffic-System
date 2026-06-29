@@ -4,6 +4,19 @@ function nodeId(col, row) {
   return `${String.fromCharCode(65 + col)}${row + 1}`;
 }
 
+// Real streets don't sit on a perfect rectangular lattice - blocks vary in
+// length and roads jog slightly at junctions. A pure row*step/col*step grid
+// reads as obviously synthetic once it's drawn over a real basemap. This
+// applies a small, deterministic per-row/per-col stagger (same network in
+// and same output every time - no Math.random) so the layout reads as a
+// real, slightly irregular street pattern instead of graph paper, without
+// touching the col/row adjacency the engine's routing logic depends on.
+function jitter(col, row, latStep, lngStep) {
+  const latOffset = Math.sin(col * 0.9 + row * 0.4) * latStep * 0.22;
+  const lngOffset = Math.cos(row * 1.1 + col * 0.5) * lngStep * 0.22;
+  return { latOffset, lngOffset };
+}
+
 // Builds a rectangular grid network for the given region (defaults to
 // "chennai" for zero-config/backward-compatible callers).
 // Same procedural generation regardless of region - only the anchor
@@ -21,11 +34,12 @@ export function buildNetwork(regionIdOrConfig) {
   for (let row = 0; row < ROWS.length; row += 1) {
     for (let col = 0; col < COLS.length; col += 1) {
       const id = nodeId(col, row);
+      const { latOffset, lngOffset } = jitter(col, row, LAT_STEP, LNG_STEP);
       intersections.set(id, {
         id,
         name: `${COLS[col]} & ${ROWS[row]}`,
-        lat: BASE_LAT - row * LAT_STEP,
-        lng: BASE_LNG + col * LNG_STEP,
+        lat: BASE_LAT - row * LAT_STEP + latOffset,
+        lng: BASE_LNG + col * LNG_STEP + lngOffset,
         col,
         row,
         neighbors: {}, // neighborId -> axis ('NS' | 'EW')
