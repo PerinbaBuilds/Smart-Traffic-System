@@ -137,11 +137,16 @@ export default function MapView({ network, state, onDispatch }) {
       )}
       <MapContainer center={center} zoom={zoom} className="h-full w-full" preferCanvas>
         <RecenterOnChange center={center} zoom={zoom} />
-        {/* Voyager basemap: real streets, labels and building footprints in
-            a familiar, Google Maps-style light palette. */}
+        {/* This network is simulated, not surveyed - it will never line up
+            with a basemap's real road centerlines. Drawing it over a tile
+            layer that shows real streets/labels (Voyager, standard OSM)
+            guarantees a visible mismatch in every city. Positron's
+            label-free style keeps real terrain/land-use context (so it
+            still reads as "a real place") without a competing real road
+            network for the simulated grid to clash with. */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
           subdomains="abcd"
           maxZoom={20}
           detectRetina

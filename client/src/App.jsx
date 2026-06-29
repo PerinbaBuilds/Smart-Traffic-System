@@ -37,7 +37,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen flex-col bg-slate-100 text-slate-900">
-      <Header mode={mode} onAbout={() => setShowAbout(true)} />
+      <Header mode={mode} onAbout={() => setShowAbout(true)} cityName={network?.cityName} />
       <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
         <main className="relative min-h-[40vh] flex-1">
           <MapView network={network} state={state} onDispatch={dispatch} />

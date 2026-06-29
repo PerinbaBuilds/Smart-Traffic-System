@@ -12,14 +12,16 @@ const MODE_LABELS = {
   reconnecting: "● Reconnecting…",
 };
 
-export default function Header({ mode, onAbout }) {
+export default function Header({ mode, onAbout, cityName }) {
   return (
     <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-sm">
       <div className="flex items-center gap-3">
         <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="h-9 w-9 flex-shrink-0 rounded-lg" />
         <div>
-          <h1 className="text-lg font-bold leading-tight text-slate-900">Chennai Emergency Green Corridor</h1>
-          <p className="text-xs text-slate-500">Watching T. Nagar traffic so ambulances don't have to wait</p>
+          <h1 className="text-lg font-bold leading-tight text-slate-900">Emergency Green Corridor</h1>
+          <p className="text-xs text-slate-500">
+            Watching {cityName || "the network"} so ambulances don't have to wait
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-3">
